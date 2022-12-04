@@ -1,0 +1,54 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  postgres
+  labels:
+    app: postgres-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: postgres-app
+    spec:
+      containers:
+      - image: postgres:10.13
+        name: postgres
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        env:
+          - name: POSTGRES_DB
+            value: "testdatabase"
+          - name: POSTGRES_USER
+            value: "testuser"
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-pass
+                key: testpassword
+          - name: PGDATA
+            value: "/var/lib/postgresql/data/pgdata"
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "500Mi"
+          limits:
+            cpu: "900m"
+            memory: "1Gi"
+        args:
+        - -cpus
+        - "1"
+        volumeMounts:
+        - name: postgredb
+          mountPath: "/var/lib/postgresql/data/pgdata"
+      volumes:
+      - name: postgredb 
+        persistentVolumeClaim:
+          claimName: pvc-postgre
